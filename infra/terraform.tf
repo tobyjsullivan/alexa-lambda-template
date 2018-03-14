@@ -2,6 +2,10 @@ variable "lambda_function_name" {
   default = "alexa_skill_template"
 }
 
+data "aws_caller_identity" "current" {}
+
+data "aws_region" "current" {}
+
 provider "aws" {
   region = "us-east-1"
 }
@@ -18,6 +22,31 @@ resource "aws_iam_role" "default" {
       },
       "Effect": "Allow",
       "Sid": ""
+    }
+  ]
+}
+EOF
+}
+
+resource "aws_iam_role_policy" "cloudwatch" {
+  role = "${aws_iam_role.default.id}"
+  policy = <<EOF
+{
+  "Version": "2012-10-17",
+  "Statement": [
+    {
+        "Effect": "Allow",
+        "Action": "logs:CreateLogGroup",
+        "Resource": "arn:aws:logs:${data.aws_region.current.name}:${data.aws_caller_identity.current.account_id}:*"
+    },
+    {
+      "Sid": "Stmt1521026279277",
+      "Action": [
+        "logs:CreateLogStream",
+        "logs:PutLogEvents"
+      ],
+      "Effect": "Allow",
+      "Resource": "arn:aws:logs:${data.aws_region.current.name}:${data.aws_caller_identity.current.account_id}:log-group:/aws/lambda/${var.lambda_function_name}:*"
     }
   ]
 }
